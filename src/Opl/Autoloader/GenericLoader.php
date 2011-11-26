@@ -81,12 +81,7 @@ class GenericLoader
 		}
 		if($path !== null)
 		{
-			$length = strlen($path);
-			if($length == 0 || $path[$length - 1] != '/')
-			{
-				$path .= '/';
-			}
-			$this->namespaces[(string)$namespace] = $path;
+			$this->namespaces[(string)$namespace] = ( '/' . trim( $path, '/' ) . '/' );
 		}
 		else
 		{
@@ -184,24 +179,21 @@ class GenericLoader
 	/**
 	 * Loads the given class or interface.
 	 *
-	 * @param string $className The name of the class to load.
+	 * @param string $classPath The name of the class to load.
 	 * @return void
 	 */
-	public function loadClass($className)
+	public function loadClass( $classPath )
 	{
-		$className = ltrim($className, $this->namespaceSeparator);
-		$match = strstr($className, $this->namespaceSeparator, true);
+            $className = strstr( $classPath, $this->namespaceSeparator, true );
 
-		if(false === $match || !isset($this->namespaces[$match]))
-		{
-			return false;
-		}
-		$rest = strrchr($className, $this->namespaceSeparator);
-		$replacement =
-			str_replace($this->namespaceSeparator, '/', substr($className, 0, strlen($className) - strlen($rest))).
-			str_replace(array('_', $this->namespaceSeparator), '/', $rest);
+            if( isset( $this->namespaces[ $className ], $this->extensions[ $className ] ) )
+            {
+                $directoryDelimitedPath = str_replace( array( $this->namespaceSeparator, '_' ), \DIRECTORY_SEPARATOR, $classPath );
+                require $this->namespaces[ $className ] . $directoryDelimitedPath . $this->extensions[ $className ];
+                
+                return true;
+            }
 
-		require($this->namespaces[$match].$replacement.$this->extensions[$match]);
-		return true;
+            return false;
 	} // end loadClass();
 } // end GenericLoader;
